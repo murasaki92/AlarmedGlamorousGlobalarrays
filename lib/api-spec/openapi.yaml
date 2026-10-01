@@ -24,8 +24,187 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /products:
+    get:
+      operationId: listProducts
+      responses:
+        "200":
+          description: Products
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/Product" } }
+    post:
+      operationId: createProduct
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProductInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Product" }
+  /products/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer } }
+    put:
+      operationId: updateProduct
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProductInput" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Product" }
+    delete:
+      operationId: archiveProduct
+      responses:
+        "200":
+          description: Archived
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Product" }
+  /sales:
+    get:
+      operationId: listSales
+      responses:
+        "200":
+          description: Sales
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/Sale" } }
+    post:
+      operationId: createSale
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SaleInput" }
+      responses:
+        "201":
+          description: Saved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Sale" }
+  /dashboard:
+    get:
+      operationId: getDashboard
+      parameters:
+        - name: period
+          in: query
+          schema: { type: string, enum: [today, week, month], default: week }
+      responses:
+        "200":
+          description: Revenue and sales summaries in Asia/Jakarta timezone
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Dashboard" }
 components:
   schemas:
+    ProductInput:
+      type: object
+      required: [name, category, price]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        category: { type: string, minLength: 1, maxLength: 50 }
+        price: { type: integer, minimum: 0, maximum: 100000000 }
+    Product:
+      type: object
+      required: [id, name, category, price, active]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        category: { type: string }
+        price: { type: integer }
+        active: { type: boolean }
+    PaymentMethod:
+      type: string
+      enum: [cash, qris, transfer, ewallet, card]
+    SaleInput:
+      type: object
+      required: [items, paymentMethod, discountType, discountValue, requestId]
+      properties:
+        requestId: { type: string, minLength: 1, maxLength: 100 }
+        paymentMethod: { $ref: "#/components/schemas/PaymentMethod" }
+        discountType: { type: string, enum: [fixed, percent] }
+        discountValue: { type: integer, minimum: 0, maximum: 100000000 }
+        note: { type: string, maxLength: 500 }
+        items:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items: { $ref: "#/components/schemas/SaleItemInput" }
+    SaleItemInput:
+      type: object
+      required: [productId, quantity]
+      properties:
+        productId: { type: integer }
+        quantity: { type: integer, minimum: 1, maximum: 1000 }
+    SaleItem:
+      type: object
+      required: [productId, name, price, quantity, total]
+      properties:
+        productId: { type: integer }
+        name: { type: string }
+        price: { type: integer }
+        quantity: { type: integer }
+        total: { type: integer }
+    Sale:
+      type: object
+      required: [id, number, createdAt, paymentMethod, subtotal, discount, total, note, items]
+      properties:
+        id: { type: integer }
+        number: { type: string }
+        createdAt: { type: string }
+        paymentMethod: { $ref: "#/components/schemas/PaymentMethod" }
+        subtotal: { type: integer }
+        discount: { type: integer }
+        total: { type: integer }
+        note: { type: string }
+        items: { type: array, items: { $ref: "#/components/schemas/SaleItem" } }
+    Dashboard:
+      type: object
+      required: [todayRevenue, weekRevenue, monthRevenue, revenue, transactionCount, itemCount, averageTransaction, payments, products, daily, recentSales]
+      properties:
+        todayRevenue: { type: integer }
+        weekRevenue: { type: integer }
+        monthRevenue: { type: integer }
+        revenue: { type: integer }
+        transactionCount: { type: integer }
+        itemCount: { type: integer }
+        averageTransaction: { type: integer }
+        payments: { type: array, items: { $ref: "#/components/schemas/PaymentSummary" } }
+        products: { type: array, items: { $ref: "#/components/schemas/ProductSummary" } }
+        daily: { type: array, items: { $ref: "#/components/schemas/DailySummary" } }
+        recentSales: { type: array, items: { $ref: "#/components/schemas/Sale" } }
+    PaymentSummary:
+      type: object
+      required: [method, revenue, count]
+      properties:
+        method: { $ref: "#/components/schemas/PaymentMethod" }
+        revenue: { type: integer }
+        count: { type: integer }
+    ProductSummary:
+      type: object
+      required: [productId, name, quantity, revenue]
+      properties:
+        productId: { type: integer }
+        name: { type: string }
+        quantity: { type: integer }
+        revenue: { type: integer }
+    DailySummary:
+      type: object
+      required: [date, revenue, count]
+      properties:
+        date: { type: string }
+        revenue: { type: integer }
+        count: { type: integer }
     HealthStatus:
       type: object
       properties:

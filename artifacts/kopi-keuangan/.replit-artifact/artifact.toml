@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Kopi — Keuangan Coffee Shop"
+description = "Aplikasi pencatatan keuangan coffee shop berbahasa Indonesia yang mobile-friendly, dengan produk, transaksi penjualan, diskon, metode pembayaran, serta ringkasan pendapatan dan penjualan."
+version = "1.0.0"
+id = "artifacts/kopi-keuangan"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19298
+
+[services.development]
+run = "pnpm --filter @workspace/kopi-keuangan run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/kopi-keuangan", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/kopi-keuangan/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19298"
+BASE_PATH = "/"

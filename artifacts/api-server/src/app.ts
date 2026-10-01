@@ -30,5 +30,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
+app.use((err: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  req.log.error({ err }, "Request failed");
+  res.status(500).json({ error: "Terjadi kesalahan saat menyimpan atau mengambil data. Silakan coba lagi." });
+});
 
 export default app;
